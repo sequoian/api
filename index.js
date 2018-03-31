@@ -1,22 +1,8 @@
-const RedditApi = require('./api')
-const secret = require('./secret')
+const topPosts = require('./top-posts');
 
-const toGet = 300
-const limit = 100
-let count = 0
-let after = null
-const posts = []
-
-const redditApi = new RedditApi()
-redditApi.login(secret.id, secret.password).then(() => {
-  return redditApi.getTopPosts('aww', 300)
-}).then(posts => {
-  posts.forEach((post, idx) => {
-    console.log(idx+1 + ') ' + post.data.title)
-  })
+topPosts('aww', 25).then(posts => {
+  posts.forEach(post => console.log(post));
 })
-.catch(error => console.log(error))
-
 
 // response.data.data.children.forEach(p => {
 //   const data = p.data
@@ -34,4 +20,3 @@ redditApi.login(secret.id, secret.password).then(() => {
 //     thumbnail: data.thumbnail,
 //   })
 // })
-    
