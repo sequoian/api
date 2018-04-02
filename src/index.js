@@ -1,7 +1,8 @@
 const topPosts = require('./top-posts');
 
-topPosts('aww', 25).then(posts => {
-  posts.forEach(post => console.log(post));
+topPosts('aww', 300).then(posts => {
+  //posts.forEach(post => console.log(post));
+  console.log('done')
 })
 
 // response.data.data.children.forEach(p => {

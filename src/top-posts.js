@@ -28,10 +28,10 @@ const topPosts = async (subreddit, numRequested) => {
     try {
       data = await redditApi.sendRequest(url);
     } catch (error) {
-      console.log(error)
+      console.log(error);
       break;
     }
-
+    
     // update listing slice
     after = data.after;
     count += data.dist;
@@ -40,10 +40,12 @@ const topPosts = async (subreddit, numRequested) => {
     data.children.forEach(post => {
       posts.push(post.data.title);
     })
+
+    console.log(`Response received: ${count} / ${numRequested}`);
   }
 
   return posts;
-  
+
 }
 
 module.exports = topPosts;
