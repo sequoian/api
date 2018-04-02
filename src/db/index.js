@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+exports.connect = dbName => {
+  mongoose.connect('mongodb://localhost/' + dbName);
+}
+
+exports.disconnect = () => {
+  mongoose.connection.close();
+}
+
 const SubredditSchema = new Schema({
   name: String,
   lastUpdated: Date,

@@ -1,8 +1,10 @@
 const topPosts = require('./top-posts');
+const db = require('./db');
 
-topPosts('aww', 300).then(posts => {
-  //posts.forEach(post => console.log(post));
-  console.log('done')
+db.connect('reddit-test');
+topPosts('aww', 10).then(async () => {
+  console.log(await db.Post.find());
+  db.disconnect();
 })
 
 // response.data.data.children.forEach(p => {

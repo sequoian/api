@@ -1,5 +1,6 @@
 const RedditApi = require('./api');
-const secret = require('./secret');
+const secret = require('../secret');
+const db = require('./db')
 
 const topPosts = async (subreddit, numRequested) => {
 
@@ -12,7 +13,6 @@ const topPosts = async (subreddit, numRequested) => {
   const {id, password} = secret;
   await redditApi.login(id, password);
 
-  const posts = [];  // build array of posts
   let after = null;
   let count = 0;
   while (count < numRequested) {
@@ -35,16 +35,32 @@ const topPosts = async (subreddit, numRequested) => {
     // update listing slice
     after = data.after;
     count += data.dist;
+    console.log(`Response received: ${count} / ${numRequested}`);
 
-    // do something with  posts
-    data.children.forEach(post => {
-      posts.push(post.data.title);
+    // insert into db
+    const posts = data.children.map(post => {
+      return {
+        _id: post.data.id,
+        title: post.data.title,
+        author: post.data.author,
+        score: post.data.score,
+        datePosted: post.data.created_utc * 1000,
+        url: post.data.url,
+        urlDomain: post.data.domain,
+        thumbnail: post.data.thumbnail,
+        numComments: post.data.num_comments,
+        commentLink: post.data.permalink,
+        //subreddit: post.data.subreddit
+      }
     })
 
-    console.log(`Response received: ${count} / ${numRequested}`);
+    try {
+      await db.Post.insertMany(posts);
+    } catch (error) {
+      console.log(error);
+    }
+    
   }
-
-  return posts;
 
 }
 
