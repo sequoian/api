@@ -3,6 +3,8 @@ const secret = require('../secret');
 const db = require('./db')
 
 const topPosts = async (subreddit, numRequested) => {
+  // time function
+  const startTime = Date.now();
 
   // check params
   if (!subreddit) throw new Error('Subreddit must be specified');
@@ -50,17 +52,20 @@ const topPosts = async (subreddit, numRequested) => {
         thumbnail: post.data.thumbnail,
         numComments: post.data.num_comments,
         commentLink: post.data.permalink,
-        //subreddit: post.data.subreddit
       }
     })
 
     try {
-      await db.Post.insertMany(posts);
+      await db.Post.insertMany(posts, {ordered: false});
     } catch (error) {
-      console.log(error);
+      // continue
     }
     
   }
+
+  const elapsed = Date.now() - startTime;
+  const sec = (elapsed / 1000).toFixed(0);
+  console.log(sec + ' seconds taken');
 
 }
 
