@@ -10,14 +10,16 @@ const topPosts = async (subreddit, numRequested) => {
   // check params
   if (!subreddit) throw new Error('Subreddit must be specified');
   if (!numRequested) throw new Error('Number of posts must be specified');
+  if (numRequested > 1000) throw new Error('Number requested cannot exceed 1000');
 
   // init reddit api
   const redditApi = new RedditApi();
   const {id, password} = secret;
+  console.log('Requesting OAuth2 key');
   await redditApi.login(id, password);
 
-  let after = null;
   let count = 0;
+  let after = null;
   while (count < numRequested) {
     // build url to api
     const remaining = numRequested - count;
@@ -27,6 +29,7 @@ const topPosts = async (subreddit, numRequested) => {
     if (count) url = `${url}&count=${count}`;
 
     // send request
+    console.log('Sending: ', url);
     let data;
     try {
       data = await redditApi.sendRequest(url);
@@ -38,33 +41,38 @@ const topPosts = async (subreddit, numRequested) => {
     // update listing slice
     after = data.after;
     count += data.dist;
-    console.log(`Response received: ${count} / ${numRequested}`);
+    console.log(`Posts received: ${count} / ${numRequested}`);
 
     // insert into db
-    const posts = data.children.map(post => {
-      return {
-        _id: post.data.id,
-        title: post.data.title,
-        author: post.data.author,
-        score: post.data.score,
-        datePosted: post.data.created_utc * 1000,
-        url: post.data.url,
-        urlDomain: post.data.domain,
-        thumbnail: post.data.thumbnail,
-        numComments: post.data.num_comments,
-        commentLink: post.data.permalink,
-        subreddit
-      }
-    })
+    const posts = data.children.map((post, idx) => ({
+      _id: post.data.id,
+      title: post.data.title,
+      author: post.data.author,
+      score: post.data.score,
+      datePosted: post.data.created_utc * 1000,
+      url: post.data.url,
+      urlDomain: post.data.domain,
+      thumbnail: post.data.thumbnail,
+      numComments: post.data.num_comments,
+      commentLink: post.data.permalink,
+      subreddit
+    }))
 
     try {
       await db.Post.insertMany(posts, {ordered: false});
     } catch (error) {
       // continue
     }
+
+    // check for premature end of listing
+    if (data.dist < limit) {
+      console.log('Reached end of listing');
+      break;
+    }
     
   }
 
+  // display time taken
   const elapsed = Date.now() - startTime;
   const sec = (elapsed / 1000).toFixed(2);
   console.log(sec + ' seconds taken');
@@ -73,8 +81,6 @@ const topPosts = async (subreddit, numRequested) => {
   if (count > 0) {
     await db.Subreddit.findOneAndUpdate({name: subreddit}, {
       name: subreddit,
-      after,
-      count,
       lastUpdated: Date.now()
     }, {upsert: true});
   }
