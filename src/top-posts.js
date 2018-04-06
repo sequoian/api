@@ -3,6 +3,7 @@ const secret = require('../secret');
 const db = require('./db')
 
 const topPosts = async (subreddit, numRequested) => {
+
   // time function
   const startTime = Date.now();
 
@@ -21,7 +22,7 @@ const topPosts = async (subreddit, numRequested) => {
     // build url to api
     const remaining = numRequested - count;
     const limit = remaining < 100 ? remaining : 100;
-    let url = `https://oauth.reddit.com/r/${subreddit}/search.json?sort=top&t=all&restrict_sr=1&limit=${limit}`;
+    let url = `https://oauth.reddit.com/r/${subreddit}/top.json?t=all&limit=${limit}`
     if (after) url = `${url}&after=${after}`;
     if (count) url = `${url}&count=${count}`;
 
@@ -52,6 +53,7 @@ const topPosts = async (subreddit, numRequested) => {
         thumbnail: post.data.thumbnail,
         numComments: post.data.num_comments,
         commentLink: post.data.permalink,
+        subreddit
       }
     })
 
@@ -64,8 +66,18 @@ const topPosts = async (subreddit, numRequested) => {
   }
 
   const elapsed = Date.now() - startTime;
-  const sec = (elapsed / 1000).toFixed(0);
+  const sec = (elapsed / 1000).toFixed(2);
   console.log(sec + ' seconds taken');
+
+  // store subreddit info
+  if (count > 0) {
+    await db.Subreddit.findOneAndUpdate({name: subreddit}, {
+      name: subreddit,
+      after,
+      count,
+      lastUpdated: Date.now()
+    }, {upsert: true});
+  }
 
 }
 

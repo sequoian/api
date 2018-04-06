@@ -29,14 +29,7 @@ const PostSchema = new Schema({
   thumbnail: String,
   numComments: Number,
   commentLink: String,
-  subreddit: {
-    type: Schema.Types.ObjectId, 
-    ref: 'Subreddit'
-  },
-  readIt: {
-    type: Boolean,
-    default: false
-  },
+  subreddit: String
 });
 
 exports.Post = mongoose.model('Post', PostSchema);
